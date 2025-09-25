@@ -9,16 +9,16 @@ export default function ChatPage() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
       <ChatSidebar
         currentSessionId={currentSessionId || undefined}
         onSessionSelect={setCurrentSessionId}
       />
-      <div className="flex-1">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {currentSessionId ? (
           <ChatInterface sessionId={currentSessionId} />
         ) : (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full overflow-hidden">
             <div className="text-center">
               <MessageCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h2 className="text-2xl font-semibold mb-2">

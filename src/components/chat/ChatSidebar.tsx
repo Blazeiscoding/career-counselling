@@ -82,7 +82,7 @@ export function ChatSidebar({
   };
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-muted/20">
+    <div className="flex h-full w-64 flex-col border-r bg-muted/20 min-h-0">
       <div className="p-4">
         <Button
           onClick={handleNewChat}
@@ -99,7 +99,7 @@ export function ChatSidebar({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="px-2 space-y-1">
           {sessions.map((session) => (
             <div
