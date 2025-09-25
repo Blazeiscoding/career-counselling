@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
-import { Send, User, Bot } from "lucide-react";
+import { Send, User, Bot, Sparkles, ArrowUp } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 interface ChatInterfaceProps {
@@ -15,11 +17,13 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
   const suggestedPrompts = [
-    "Help me choose a career path",
-    "Review my resume for a software role",
-    "How do I switch from sales to product management?",
-    "Prep me for a data analyst interview",
+    "💼 Help me choose a career path",
+    "📝 Review my resume for a software role", 
+    "🔄 How do I switch from sales to product management?",
+    "🎯 Prep me for a data analyst interview",
   ];
 
   const { data: messagesData, refetch } = api.chat.getMessages.useQuery({
@@ -43,7 +47,16 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
     ...(optimisticAssistantMsg ? [optimisticAssistantMsg] : []),
   ];
 
-  // Minimal, safe Markdown renderer (bold, italics, inline code, links, line breaks)
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(textarea.scrollHeight, 160) + "px";
+    }
+  }, [input]);
+
+  // Enhanced Markdown renderer with better styling
   const renderMarkdownInline = (text: string): React.ReactNode[] => {
     // Phase 1: Links [label](url)
     const parts = text.split(/(\[[^\]]+\]\([^\)]+\))/g);
@@ -54,7 +67,15 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
         const label = m[1];
         const url = m[2];
         linkNodes.push(
-          <a key={`lnk-${i}`} href={url} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:opacity-90">{label}</a>
+          <a 
+            key={`lnk-${i}`} 
+            href={url} 
+            target="_blank" 
+            rel="noreferrer" 
+            className="text-blue-500 hover:text-blue-600 underline underline-offset-2 font-medium transition-colors"
+          >
+            {label}
+          </a>
         );
       } else {
         linkNodes.push(part);
@@ -74,19 +95,37 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
       codeSplit.forEach((seg, i) => {
         if (seg.startsWith("`") && seg.endsWith("`")) {
           const code = seg.slice(1, -1);
-          result.push(<code key={`code-${idxBase}-${i}`} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">{code}</code>);
+          result.push(
+            <code 
+              key={`code-${idxBase}-${i}`} 
+              className="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[0.85em] text-slate-900 dark:text-slate-100 font-medium"
+            >
+              {code}
+            </code>
+          );
         } else {
           // Bold **text** inside this plain segment
           const boldSplit = seg.split(/(\*\*[^*]+\*\*)/g);
           boldSplit.forEach((bseg, j) => {
             if (bseg.startsWith("**") && bseg.endsWith("**")) {
-              result.push(<strong key={`b-${idxBase}-${i}-${j}`}>{bseg.slice(2, -2)}</strong>);
+              result.push(
+                <strong 
+                  key={`b-${idxBase}-${i}-${j}`} 
+                  className="font-semibold text-slate-900 dark:text-slate-100"
+                >
+                  {bseg.slice(2, -2)}
+                </strong>
+              );
             } else {
               // Italic *text*
               const italSplit = bseg.split(/(\*[^*]+\*)/g);
               italSplit.forEach((iseg, k) => {
                 if (iseg.startsWith("*") && iseg.endsWith("*")) {
-                  result.push(<em key={`i-${idxBase}-${i}-${j}-${k}`}>{iseg.slice(1, -1)}</em>);
+                  result.push(
+                    <em key={`i-${idxBase}-${i}-${j}-${k}`} className="italic">
+                      {iseg.slice(1, -1)}
+                    </em>
+                  );
                 } else if (iseg) {
                   result.push(iseg);
                 }
@@ -121,8 +160,6 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
   };
 
   useEffect(() => {
-    // Only auto-scroll when there are messages (or optimistic ones).
-    // When there are no messages, we want the greeting and suggested prompts to be visible at the top.
     if (visibleMessages.length > 0 || optimisticUserMsg || optimisticAssistantMsg) {
       scrollToBottom();
     }
@@ -134,10 +171,9 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
 
     const content = input.trim();
     setIsLoading(true);
-    // Optimistically render user and assistant placeholder
     setOptimisticUserMsg({
       id: "optimistic-user",
-      role: "USER",
+      role: "USER", 
       content,
       createdAt: new Date().toISOString(),
     });
@@ -162,9 +198,7 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      // Read and append chunks into the optimistic assistant bubble
-      // until stream finishes
-      // eslint-disable-next-line no-constant-condition
+      
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -177,7 +211,6 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
       console.error("Failed to stream response:", error);
     } finally {
       setIsLoading(false);
-      // Clear optimistic messages and sync from server
       setOptimisticUserMsg(null);
       setOptimisticAssistantMsg(null);
       void refetch();
@@ -185,172 +218,188 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-950/50 dark:to-slate-900">
       {/* Messages */}
-      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto bg-background">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto">
         {visibleMessages.length === 0 ? (
-          <div className="p-4 md:p-6">
-            <div className="flex flex-col items-start">
-              <div className="flex gap-3 max-w-[80%]">
-                <div className="flex h-9 w-9 shrink-0 select-none items-center justify-center rounded-full border bg-muted text-muted-foreground">
-                  <Bot className="h-4 w-4" />
-                </div>
-                <div className="rounded-2xl rounded-tl-sm px-4 py-3 bg-muted shadow-sm">
-                  <div className="text-sm leading-relaxed">
-                    {renderMessage(
-                      "Hi! I'm your AI career counselor. What can I help you with today?"
-                    )}
-                  </div>
-                </div>
+          <div className="flex items-center justify-center h-full p-6">
+            <div className="text-center max-w-lg">
+              <div className="inline-flex items-center justify-center w-16 h-16 mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
+                <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {suggestedPrompts.map((p) => (
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                Welcome to Career Counselor
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+                I'm your AI career counselor, ready to help you navigate your professional journey. 
+                What would you like to explore today?
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {suggestedPrompts.map((prompt) => (
                   <button
-                    key={p}
+                    key={prompt}
                     type="button"
-                    onClick={() => setInput(p)}
-                    className="text-xs md:text-sm px-3 py-1.5 rounded-full border bg-background hover:bg-muted transition-colors"
+                    onClick={() => setInput(prompt.replace(/^\S+\s/, ''))} // Remove emoji
+                    className="group p-4 text-left rounded-xl border border-slate-200 dark:border-slate-700 
+                             bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 
+                             hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200
+                             hover:shadow-md"
                   >
-                    {p}
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{prompt.match(/^\S+/)?.[0]}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        {prompt.replace(/^\S+\s/, '')}
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
           </div>
         ) : (
-          <div className="p-4 md:p-6 space-y-3">
+          <div className="p-4 lg:p-6 space-y-6 max-w-4xl mx-auto">
             {visibleMessages.map((message, idx) => {
               const prev = visibleMessages[idx - 1];
-              const next = visibleMessages[idx + 1];
               const isUser = message.role === "USER";
               const isGroupStart = !prev || prev.role !== message.role;
-              const isGroupEnd = !next || next.role !== message.role;
 
               return (
                 <div
                   key={message.id}
                   className={cn(
-                    "flex gap-2 md:gap-3",
+                    "flex gap-4",
                     isUser ? "justify-end" : "justify-start"
                   )}
                 >
                   <div
                     className={cn(
-                      "flex max-w-[80%] items-end",
+                      "flex max-w-[85%] sm:max-w-[75%]",
                       isUser ? "flex-row-reverse" : "flex-row"
                     )}
                   >
-                    {/* Avatar only at group start */}
-                    {isGroupStart ? (
-                      <div
-                        className={cn(
-                          "flex h-8 w-8 md:h-9 md:w-9 shrink-0 select-none items-center justify-center rounded-full border shadow-sm",
-                          isUser
-                            ? "bg-blue-500 text-white"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {isUser ? (
-                          <User className="h-4 w-4" />
-                        ) : (
-                          <Bot className="h-4 w-4" />
-                        )}
-                      </div>
-                    ) : (
-                      <div className="w-8 md:w-9" />
-                    )}
-
-                    <div className={cn("ml-2 mr-2 space-y-1")}
+                    {/* Avatar */}
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full shadow-sm border-2",
+                        isUser
+                          ? "bg-gradient-to-br from-blue-500 to-blue-600 border-blue-200 dark:border-blue-400 text-white"
+                          : "bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-200 dark:border-emerald-400 text-white"
+                      )}
                     >
+                      {isUser ? (
+                        <User className="h-5 w-5" />
+                      ) : (
+                        <Bot className="h-5 w-5" />
+                      )}
+                    </div>
+
+                    <div className={cn("space-y-1", isUser ? "mr-3" : "ml-3")}>
                       <div
                         className={cn(
-                          "px-3 py-2 text-sm shadow-sm",
+                          "px-4 py-3 text-sm shadow-sm border",
                           isUser
-                            ? "bg-blue-500 text-white"
-                            : "bg-muted",
-                          // Bubble shape: sharper corner towards the speaker
-                          isUser
-                            ? isGroupStart
-                              ? "rounded-2xl rounded-tr-sm"
-                              : "rounded-2xl"
-                            : isGroupStart
-                            ? "rounded-2xl rounded-tl-sm"
-                            : "rounded-2xl"
+                            ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-200 dark:border-blue-400 rounded-2xl rounded-tr-md"
+                            : "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-md"
                         )}
                       >
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <div className="leading-relaxed">
                           {isUser ? (
-                            <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                            <p className="whitespace-pre-wrap">{message.content}</p>
                           ) : (
-                            <div className="leading-relaxed">{renderMessage(message.content)}</div>
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              {renderMessage(message.content)}
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Timestamp at end of group */}
-                      {isGroupEnd ? (
-                        <div
-                          className={cn(
-                            "text-[10px] md:text-xs opacity-60",
-                            isUser ? "text-right" : "text-left"
-                          )}
-                        >
-                          {new Date(message.createdAt).toLocaleTimeString()}
-                        </div>
-                      ) : null}
+                      {/* Timestamp */}
+                      <div
+                        className={cn(
+                          "text-xs text-slate-500 dark:text-slate-400 px-1",
+                          isUser ? "text-right" : "text-left"
+                        )}
+                      >
+                        {new Date(message.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
               );
             })}
+            
+            {/* Loading indicator */}
             {isLoading && !optimisticAssistantMsg && (
               <div className="flex justify-start">
-                <div className="flex gap-3 max-w-[80%]">
-                  <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-lg border shadow bg-muted">
-                    <Bot className="h-4 w-4" />
+                <div className="flex gap-4 max-w-[75%]">
+                  <div className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 border-2 border-emerald-200 dark:border-emerald-400 text-white shadow-sm">
+                    <Bot className="h-5 w-5" />
                   </div>
-                  <div className="rounded-lg px-3 py-2 bg-muted">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
+                  <div className="ml-3">
+                    <div className="px-4 py-3 rounded-2xl rounded-tl-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                      <div className="flex space-x-1.5">
+                        <div className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></div>
+                        <div 
+                          className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.15s" }}
+                        ></div>
+                        <div 
+                          className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.3s" }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             )}
-            {/* End of messages */}
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t p-3 md:p-4 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <form onSubmit={handleSubmit} className="flex items-end gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void handleSubmit(e as unknown as React.FormEvent);
-              }
-            }}
-            rows={1}
-            placeholder="Ask me about your career... (Shift+Enter for newline)"
-            className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-h-40"
-            disabled={isLoading}
-          />
-          <Button type="submit" size="icon" className="h-10 w-10" disabled={!input.trim() || isLoading}>
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+      {/* Input Area */}
+      <div className="border-t border-slate-200 dark:border-slate-700 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto">
+          <form onSubmit={handleSubmit} className="relative">
+            <div className="relative flex items-end gap-3 p-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-colors">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSubmit(e as unknown as React.FormEvent);
+                  }
+                }}
+                rows={1}
+                placeholder="Ask me about your career goals, job search, or professional development..."
+                className="flex-1 resize-none bg-transparent px-3 py-2 text-sm placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none max-h-32 min-h-[2.5rem]"
+                disabled={isLoading}
+              />
+              <Button 
+                type="submit" 
+                size="icon" 
+                className="h-8 w-8 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md disabled:opacity-50" 
+                disabled={!input.trim() || isLoading}
+              >
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center justify-between mt-2 px-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Press Enter to send, Shift+Enter for new line
+              </p>
+              <div className="text-xs text-slate-400 dark:text-slate-500">
+                {input.length}/2000
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
