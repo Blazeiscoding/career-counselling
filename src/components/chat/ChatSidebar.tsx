@@ -4,7 +4,15 @@
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageSquare, Pencil, Trash2, Check, X, Sparkles } from "lucide-react";
+import {
+  Plus,
+  MessageSquare,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -27,7 +35,7 @@ export function ChatSidebar({
     {},
     { enabled: status === "authenticated" }
   );
-  
+
   const createSessionMutation = api.chat.createSession.useMutation({
     onSuccess: (session) => {
       refetch();
@@ -82,7 +90,11 @@ export function ChatSidebar({
   };
 
   const handleDeleteSession = (sessionId: string) => {
-    if (confirm("Are you sure you want to delete this conversation? This action cannot be undone.")) {
+    if (
+      confirm(
+        "Are you sure you want to delete this conversation? This action cannot be undone."
+      )
+    ) {
       deleteSessionMutation.mutate({ sessionId });
     }
   };
@@ -91,13 +103,14 @@ export function ChatSidebar({
     const d = new Date(date);
     const now = new Date();
     const diffInHours = (now.getTime() - d.getTime()) / (1000 * 3600);
-    
+
     if (diffInHours < 24) {
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffInHours < 168) { // 7 days
-      return d.toLocaleDateString([], { weekday: 'short' });
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } else if (diffInHours < 168) {
+      // 7 days
+      return d.toLocaleDateString([], { weekday: "short" });
     } else {
-      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return d.toLocaleDateString([], { month: "short", day: "numeric" });
     }
   };
 
@@ -110,20 +123,26 @@ export function ChatSidebar({
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-slate-900 dark:text-slate-100">Career Counselor</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">AI-powered career guidance</p>
+            <h1 className="font-semibold text-slate-900 dark:text-slate-100">
+              Career Counselor
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              AI-powered career guidance
+            </p>
           </div>
         </div>
-        
+
         <Button
           onClick={handleNewChat}
           className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200"
-          disabled={createSessionMutation.isPending || status !== "authenticated"}
+          disabled={
+            createSessionMutation.isPending || status !== "authenticated"
+          }
         >
           <Plus className="h-4 w-4 mr-2" />
           {createSessionMutation.isPending ? "Creating..." : "New Chat"}
         </Button>
-        
+
         {status === "unauthenticated" && (
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 text-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
             Please sign in to create and access your chat history.
@@ -137,8 +156,12 @@ export function ChatSidebar({
           <div className="p-4 text-center">
             <div className="py-8">
               <MessageSquare className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">No conversations yet</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Start a new chat to begin your career journey</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                No conversations yet
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Start a new chat to begin your career journey
+              </p>
             </div>
           </div>
         ) : (
@@ -149,8 +172,8 @@ export function ChatSidebar({
                 className={cn(
                   "group relative flex items-center gap-3 rounded-xl px-3 py-3 cursor-pointer transition-all duration-200",
                   "hover:bg-white/70 dark:hover:bg-slate-800/70 hover:shadow-sm",
-                  currentSessionId === session.id && 
-                  "bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700"
+                  currentSessionId === session.id &&
+                    "bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700"
                 )}
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700">
@@ -200,7 +223,8 @@ export function ChatSidebar({
                         {session.title}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {formatDate(session.updatedAt)} • {session._count?.messages || 0} messages
+                        {formatDate(session.updatedAt.toISOString())} •{" "}
+                        {session._count?.messages || 0} messages
                       </div>
                     </div>
 
