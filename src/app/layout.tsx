@@ -44,7 +44,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {/* spacer equal to header height to prevent overlap */}
-          <div aria-hidden className="h-14" />
+          <div />
           {children}
         </Providers>
       </body>
