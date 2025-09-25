@@ -23,13 +23,10 @@ export default function SignInPage() {
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false,
+        callbackUrl: "/chat",
       });
-
-      if (result?.error) {
+      if ((result as any)?.error) {
         setError("Invalid credentials");
-      } else {
-        router.push("/chat");
       }
     } catch (error) {
       setError(error as string);

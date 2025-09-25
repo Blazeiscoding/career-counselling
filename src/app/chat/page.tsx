@@ -9,7 +9,7 @@ export default function ChatPage() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[calc(100vh-3.5rem)]">
       <ChatSidebar
         currentSessionId={currentSessionId || undefined}
         onSessionSelect={setCurrentSessionId}

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface ChatSidebarProps {
   currentSessionId?: string;
@@ -18,10 +19,14 @@ export function ChatSidebar({
   onSessionSelect,
 }: ChatSidebarProps) {
   const router = useRouter();
+  const { status } = useSession();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
-  const { data: sessionsData, refetch } = api.chat.getSessions.useQuery({});
+  const { data: sessionsData, refetch } = api.chat.getSessions.useQuery(
+    {},
+    { enabled: status === "authenticated" }
+  );
   const createSessionMutation = api.chat.createSession.useMutation({
     onSuccess: (session) => {
       refetch();
@@ -49,6 +54,10 @@ export function ChatSidebar({
   const sessions = sessionsData?.sessions || [];
 
   const handleNewChat = () => {
+    if (status !== "authenticated") {
+      router.push("/auth/signin");
+      return;
+    }
     createSessionMutation.mutate({});
   };
 
@@ -78,11 +87,16 @@ export function ChatSidebar({
         <Button
           onClick={handleNewChat}
           className="w-full"
-          disabled={createSessionMutation.isPending}
+          disabled={createSessionMutation.isPending || status !== "authenticated"}
         >
           <Plus className="h-4 w-4 mr-2" />
           New Chat
         </Button>
+        {status === "unauthenticated" && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Please sign in to create and view chats.
+          </p>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">

@@ -20,13 +20,21 @@ declare module "next-auth" {
 
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    async jwt({ token, user }) {
+      // Persist user id on the token after initial sign in
+      if (user) {
+        token.id = (user as { id: string }).id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      return {
+        ...session,
+        user: session.user
+          ? { ...session.user, id: (token as { id?: string }).id ?? "" }
+          : (session.user as any),
+      };
+    },
   },
   adapter: PrismaAdapter(db),
   providers: [

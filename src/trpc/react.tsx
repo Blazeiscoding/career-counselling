@@ -45,6 +45,12 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
             headers.set("x-trpc-source", "nextjs-react");
             return headers;
           },
+          // Important: include cookies so the server can read the NextAuth session
+          fetch: (url, options) =>
+            fetch(url, {
+              ...options,
+              credentials: "include",
+            }),
           transformer: superjson,
         }),
       ],
