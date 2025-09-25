@@ -29,16 +29,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // If client accidentally sends a bcrypt hash, store as-is to avoid double-hashing
-    const looksHashed = trimmedPassword.startsWith("$2") && trimmedPassword.length >= 55;
-    const hashedPassword = looksHashed
-      ? trimmedPassword
-      : await bcrypt.hash(trimmedPassword, 10);
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        "Register:", looksHashed ? "received bcrypt hash from client" : "hashing raw password on server"
-      );
-    }
+    // Always hash password on the server
+    const hashedPassword = await bcrypt.hash(trimmedPassword, 10);
 
     // Create user
     const user = await db.user.create({

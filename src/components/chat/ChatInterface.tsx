@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, User, Bot } from "lucide-react";
@@ -33,6 +33,77 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
   });
 
   const messages = messagesData?.messages || [];
+
+  // Minimal, safe Markdown renderer (bold, italics, inline code, links, line breaks)
+  const renderMarkdownInline = (text: string): React.ReactNode[] => {
+    // Phase 1: Links [label](url)
+    const parts = text.split(/(\[[^\]]+\]\([^\)]+\))/g);
+    const linkNodes: (string | React.ReactNode)[] = [];
+    parts.forEach((part, i) => {
+      const m = part.match(/^\[([^\]]+)\]\(([^\)]+)\)$/);
+      if (m) {
+        const label = m[1];
+        const url = m[2];
+        linkNodes.push(
+          <a key={`lnk-${i}`} href={url} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:opacity-90">{label}</a>
+        );
+      } else {
+        linkNodes.push(part);
+      }
+    });
+
+    // Phase 2: inline code, bold, italics
+    const result: React.ReactNode[] = [];
+    linkNodes.forEach((node, idxBase) => {
+      if (typeof node !== "string") {
+        result.push(node);
+        return;
+      }
+
+      // Inline code `code`
+      const codeSplit = node.split(/(`[^`]+`)/g);
+      codeSplit.forEach((seg, i) => {
+        if (seg.startsWith("`") && seg.endsWith("`")) {
+          const code = seg.slice(1, -1);
+          result.push(<code key={`code-${idxBase}-${i}`} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">{code}</code>);
+        } else {
+          // Bold **text** inside this plain segment
+          const boldSplit = seg.split(/(\*\*[^*]+\*\*)/g);
+          boldSplit.forEach((bseg, j) => {
+            if (bseg.startsWith("**") && bseg.endsWith("**")) {
+              result.push(<strong key={`b-${idxBase}-${i}-${j}`}>{bseg.slice(2, -2)}</strong>);
+            } else {
+              // Italic *text*
+              const italSplit = bseg.split(/(\*[^*]+\*)/g);
+              italSplit.forEach((iseg, k) => {
+                if (iseg.startsWith("*") && iseg.endsWith("*")) {
+                  result.push(<em key={`i-${idxBase}-${i}-${j}-${k}`}>{iseg.slice(1, -1)}</em>);
+                } else if (iseg) {
+                  result.push(iseg);
+                }
+              });
+            }
+          });
+        }
+      });
+    });
+    return result;
+  };
+
+  const renderMessage = (content: string) => {
+    // Split by lines and render with <br />
+    const lines = content.split(/\r?\n/);
+    return (
+      <>
+        {lines.map((line, idx) => (
+          <span key={`ln-${idx}`}>
+            {renderMarkdownInline(line)}
+            {idx < lines.length - 1 ? <br /> : null}
+          </span>
+        ))}
+      </>
+    );
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -103,7 +174,13 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
                       : "bg-muted"
                   )}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    {message.role === "USER" ? (
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <div className="text-sm">{renderMessage(message.content)}</div>
+                    )}
+                  </div>
                   <p className="text-xs opacity-70 mt-1">
                     {new Date(message.createdAt).toLocaleTimeString()}
                   </p>

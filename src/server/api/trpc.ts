@@ -41,13 +41,6 @@ export const createTRPCContext = async (req?: NextRequest) => {
       // ignore
     }
   }
-
-  if (process.env.NODE_ENV !== "production") {
-    console.log(
-      "tRPC ctx session:",
-      session ? { hasUser: !!session.user, userId: (session as any).user?.id } : null
-    );
-  }
   return createInnerTRPCContext({ session });
 };
 
