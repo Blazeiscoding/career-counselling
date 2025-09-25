@@ -44,14 +44,41 @@ export const authOptions: NextAuthOptions = {
         if (!parsedCredentials.success) return null;
 
         const { email, password } = parsedCredentials.data;
+        const normalizedEmail = email.trim().toLowerCase();
+        const trimmedPassword = password.trim();
 
         const user = await db.user.findUnique({
-          where: { email },
+          where: { email: normalizedEmail },
         });
 
-        if (!user || !user.password) return null;
+        if (!user || !user.password) {
+          console.warn("Auth: user not found or no password set for", normalizedEmail);
+          return null;
+        }
 
-        const passwordsMatch = await bcrypt.compare(password, user.password);
+        // If password in DB is not a bcrypt hash, migrate it by hashing now
+        // Typical bcrypt hashes start with "$2" (e.g., $2a$, $2b$)
+        let dbPasswordHash = user.password;
+        const looksHashed = dbPasswordHash.startsWith("$2");
+        if (!looksHashed) {
+          try {
+            const migratedHash = await bcrypt.hash(dbPasswordHash, 10);
+            await db.user.update({
+              where: { id: user.id },
+              data: { password: migratedHash },
+            });
+            dbPasswordHash = migratedHash;
+            console.warn("Auth: migrated plain-text password to bcrypt hash for", normalizedEmail);
+          } catch (e) {
+            console.error("Auth: failed migrating password for", normalizedEmail, e);
+            return null;
+          }
+        }
+
+        const passwordsMatch = await bcrypt.compare(
+          trimmedPassword,
+          dbPasswordHash
+        );
 
         if (passwordsMatch) {
           return {
@@ -61,13 +88,18 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
+        console.warn(
+          "Auth: password mismatch for",
+          normalizedEmail,
+          "hashPrefix:", dbPasswordHash.slice(0, 4),
+          "hashLen:", dbPasswordHash.length
+        );
         return null;
       },
     }),
   ],
   pages: {
     signIn: "/auth/signin",
-    signUp: "/auth/signup",
   },
   session: {
     strategy: "jwt",

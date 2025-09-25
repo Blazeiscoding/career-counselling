@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { api } from "@/utils/api";
+import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, User, Bot } from "lucide-react";
 import { cn } from "@/utils/cn";

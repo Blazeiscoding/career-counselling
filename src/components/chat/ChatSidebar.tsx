@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { api } from "@/utils/api";
+import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/utils/cn";
@@ -78,7 +78,7 @@ export function ChatSidebar({
         <Button
           onClick={handleNewChat}
           className="w-full"
-          disabled={createSessionMutation.isLoading}
+          disabled={createSessionMutation.isPending}
         >
           <Plus className="h-4 w-4 mr-2" />
           New Chat
