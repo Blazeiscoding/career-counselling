@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { initTRPC, TRPCError } from "@trpc/server";
 import { type Session, getServerSession } from "next-auth";
 import { getToken } from "next-auth/jwt";
