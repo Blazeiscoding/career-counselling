@@ -1,36 +1,206 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Career Counseling AI Chat Application
 
-## Getting Started
+A modern, full-stack AI-powered career counseling application built with Next.js 15, TypeScript, and PostgreSQL. This application provides personalized career guidance through an intuitive chat interface powered by Google's Generative AI (Gemini).
 
-First, run the development server:
+## Features
+
+- **🤖 AI-Powered Career Guidance**: Get personalized career advice using Google Gemini AI
+- **💬 Interactive Chat Interface**: Real-time chat with persistent conversation history
+- **🔐 Secure Authentication**: User registration and login with NextAuth.js
+- **📱 Responsive Design**: Modern UI built with Tailwind CSS and Radix UI components
+- **⚡ Real-time Updates**: Built with tRPC for type-safe API routes
+- **🗄️ Persistent Storage**: PostgreSQL database with Prisma ORM for data management
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS, Radix UI components
+- **Backend**: Next.js API routes, tRPC
+- **Database**: PostgreSQL, Prisma ORM
+- **Authentication**: NextAuth.js with credentials provider
+- **AI Integration**: Google Generative AI (Gemini)
+- **Development**: ESLint, TypeScript
+
+## Prerequisites
+
+Before running this application, make sure you have:
+
+- **Node.js** (version 18 or higher)
+- **npm** or **yarn** package manager
+- **PostgreSQL** database server
+- **Google AI API Key** for Gemini integration
+
+## Installation & Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone <your-repo-url>
+cd career-counselling
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+# or
+yarn install
+```
+
+### 3. Set Up Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/career_counselling"
+
+# NextAuth Configuration
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret-key"
+
+# Google AI (Gemini)
+GOOGLE_AI_API_KEY="your-google-ai-api-key"
+```
+
+### 4. Set Up PostgreSQL Database
+
+1. **Install PostgreSQL** if not already installed
+2. **Create a database** named `career_counselling`
+3. **Run Prisma migrations** to set up the database schema:
+
+```bash
+npx prisma migrate dev
+```
+
+This will create all necessary tables including:
+- Users (authentication and profiles)
+- Chat sessions (conversation threads)
+- Messages (individual chat messages)
+- Accounts & Sessions (NextAuth.js tables)
+
+### 5. Generate Prisma Client
+
+```bash
+npx prisma generate
+```
+
+### 6. Start the Development Server
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Getting Started
 
-## Learn More
+1. **Register** a new account or **sign in** with existing credentials
+2. **Start a conversation** by typing your career-related questions
+3. **Get personalized advice** from the AI career counselor
 
-To learn more about Next.js, take a look at the following resources:
+### Example Queries
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The AI can help with:
+- Career path recommendations
+- Resume reviews and improvements
+- Interview preparation
+- Industry transition guidance
+- Skill development suggestions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+├── src/
+│   ├── app/                 # Next.js 13+ app directory
+│   │   ├── api/            # API routes (auth, etc.)
+│   │   ├── auth/           # Authentication pages
+│   │   ├── chat/           # Chat interface page
+│   │   └── page.tsx        # Home page (redirects to auth/chat)
+│   ├── components/         # Reusable UI components
+│   │   ├── chat/          # Chat-specific components
+│   │   └── ui/            # Base UI components
+│   ├── server/            # Server-side utilities
+│   │   ├── api/           # tRPC API routers
+│   │   ├── auth.ts        # NextAuth configuration
+│   │   └── db.ts          # Database connection
+│   ├── trpc/              # tRPC client setup
+│   └── utils/             # Utility functions
+├── prisma/
+│   └── schema.prisma      # Database schema
+├── public/                # Static assets
+└── package.json           # Dependencies and scripts
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Routes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/signin` - User login
+
+### Chat
+- `GET /api/chat/sessions` - Get user's chat sessions
+- `POST /api/chat/sessions` - Create new chat session
+- `GET /api/chat/messages` - Get messages for a session
+- `POST /api/chat/messages` - Send message and get AI response
+
+## Development Scripts
+
+```bash
+# Development
+npm run dev          # Start development server with Turbopack
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+
+# Database
+npx prisma studio    # Open Prisma Studio (database GUI)
+npx prisma migrate dev  # Run migrations in development
+npx prisma generate  # Regenerate Prisma client
+```
+
+## Deployment
+
+### Build for Production
+
+```bash
+npm run build
+npm run start
+```
+
+### Environment Variables for Production
+
+Make sure to set these environment variables in your deployment platform:
+
+- `DATABASE_URL` - Your production PostgreSQL connection string
+- `NEXTAUTH_URL` - Your production domain
+- `NEXTAUTH_SECRET` - A secure random string for JWT encryption
+- `GOOGLE_AI_API_KEY` - Your Google AI API key
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](../../issues) page
+2. Create a new issue with detailed information
+3. Contact the development team
+
+---
+
+Built with ❤️ using Next.js, TypeScript, and modern web technologies.
