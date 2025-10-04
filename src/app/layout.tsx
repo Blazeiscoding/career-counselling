@@ -21,31 +21,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        {/* no-FOIT: apply saved theme before React hydration to avoid flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              (function(){
+              (function() {
                 try {
-                  var t = localStorage.getItem('theme');
-                  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  var useDark = t ? t === 'dark' : prefersDark;
-                  var root = document.documentElement;
-                  if (useDark) root.classList.add('dark'); else root.classList.remove('dark');
+                  // Force dark mode always
+                  document.documentElement.classList.add('dark');
+                  localStorage.setItem('theme', 'dark');
                 } catch (e) {}
               })();
             `,
           }}
         />
       </head>
-      <body className={`font-sans antialiased ${inter.variable}`}>
+      <body className={`font-sans antialiased ${inter.variable}`} suppressHydrationWarning>
         <Providers>
-          <Navbar />
-          {/* spacer equal to header height to prevent overlap */}
-          <div />
-          {children}
+          <div className="flex flex-col h-screen">
+            <Navbar />
+            <main className="flex-1 overflow-hidden">
+              {children}
+            </main>
+          </div>
         </Providers>
       </body>
     </html>

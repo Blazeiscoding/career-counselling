@@ -1,9 +1,7 @@
-
 "use client";
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import ThemeToggle from "@/components/theme/ThemeToggle";
 import { LogIn, LogOut, Sparkles, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,7 +9,7 @@ export default function Navbar() {
   const { data: session, status } = useSession();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-950/60">
+    <header className="flex-shrink-0 z-50 w-full border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-950/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-6 text-sm">
           <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100 hover:opacity-90 transition-opacity">
@@ -31,8 +29,6 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-
           {status === "authenticated" ? (
             <div className="flex items-center gap-3">
               {session?.user?.name && (
