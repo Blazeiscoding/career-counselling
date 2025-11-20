@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { MESSAGE_CONSTANTS } from "@/lib/constants";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -104,7 +105,13 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         sessionId: z.string(),
-        content: z.string().min(1),
+        content: z
+          .string()
+          .min(1, "Message content cannot be empty")
+          .max(
+            MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH,
+            `Message content cannot exceed ${MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH} characters`
+          ),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -133,7 +140,7 @@ export const chatRouter = createTRPCRouter({
       const previousMessages = await ctx.db.message.findMany({
         where: { chatSessionId: input.sessionId },
         orderBy: { createdAt: "asc" },
-        take: 20, // Last 20 messages for context
+        take: MESSAGE_CONSTANTS.MAX_CONTEXT_MESSAGES,
       });
 
       try {

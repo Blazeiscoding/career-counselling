@@ -8,6 +8,7 @@ import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Send, User, Bot, Sparkles, ArrowUp } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { MESSAGE_CONSTANTS } from "@/lib/constants";
 
 interface ChatInterfaceProps {
   sessionId: string;
@@ -244,7 +245,7 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
       if (hasError) {
         setTimeout(() => {
           setOptimisticAssistantMsg(null);
-        }, 5000);
+        }, MESSAGE_CONSTANTS.ERROR_MESSAGE_DISPLAY_TIME);
       } else {
         setOptimisticAssistantMsg(null);
         void refetch();
@@ -415,12 +416,13 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
                 placeholder="Ask me about your career goals, job search, or professional development..."
                 className="flex-1 resize-none bg-transparent px-3 py-2 text-sm placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none max-h-32 min-h-[2.5rem]"
                 disabled={isLoading}
+                maxLength={MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH}
               />
               <Button 
                 type="submit" 
                 size="icon" 
                 className="h-8 w-8 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md disabled:opacity-50" 
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || input.length > MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH}
               >
                 <ArrowUp className="h-4 w-4" />
               </Button>
@@ -429,8 +431,13 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Press Enter to send, Shift+Enter for new line
               </p>
-              <div className="text-xs text-slate-400 dark:text-slate-500">
-                {input.length}/2000
+              <div className={cn(
+                "text-xs",
+                input.length > MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH 
+                  ? "text-red-500 dark:text-red-400" 
+                  : "text-slate-400 dark:text-slate-500"
+              )}>
+                {input.length}/{MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH}
               </div>
             </div>
           </form>

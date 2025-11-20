@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth";
 import { db } from "@/server/db";
+import { MESSAGE_CONSTANTS } from "@/lib/constants";
 
 const genAI = process.env.GEMINI_API_KEY 
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
@@ -35,9 +36,23 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { sessionId, content } = body as { sessionId: string; content: string };
 
-    if (!sessionId || !content || !content.trim()) {
+    const trimmedContent = content?.trim() ?? "";
+    
+    if (!sessionId || !trimmedContent) {
       return new Response(
         JSON.stringify({ error: "Invalid payload: sessionId and content are required" }),
+        { 
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+    }
+
+    if (trimmedContent.length > MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH) {
+      return new Response(
+        JSON.stringify({ 
+          error: `Message content exceeds maximum length of ${MESSAGE_CONSTANTS.MAX_CONTENT_LENGTH} characters` 
+        }),
         { 
           status: 400,
           headers: { "Content-Type": "application/json" }
@@ -62,7 +77,7 @@ export async function POST(req: NextRequest) {
     // Save user message
     const userMessage = await db.message.create({
       data: {
-        content: content.trim(),
+        content: trimmedContent,
         role: "USER",
         chatSessionId: sessionId,
       },
@@ -72,7 +87,7 @@ export async function POST(req: NextRequest) {
     const previousMessages = await db.message.findMany({
       where: { chatSessionId: sessionId },
       orderBy: { createdAt: "asc" },
-      take: 20,
+      take: MESSAGE_CONSTANTS.MAX_CONTEXT_MESSAGES,
     });
 
     // Build system prompt
@@ -99,7 +114,7 @@ Guidelines:
 Previous conversation:
 ${conversationHistory}
 
-Current user message: ${content}
+Current user message: ${trimmedContent}
 
 Please respond as CareerBot, the career counselor:`;
 
@@ -169,7 +184,10 @@ Please respond as CareerBot, the career counselor:`;
                 chatSessionId: sessionId,
               },
             });
-          } catch {}
+          } catch (dbError) {
+            console.error("Failed to save fallback message to database:", dbError);
+            // Continue - we've already sent the fallback message to the client
+          }
           controller.close();
         }
       },
