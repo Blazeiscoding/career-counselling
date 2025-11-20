@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { initTRPC, TRPCError } from "@trpc/server";
 import { type Session, getServerSession } from "next-auth";
 import { getToken } from "next-auth/jwt";
@@ -28,13 +27,13 @@ export const createTRPCContext = async (req?: NextRequest) => {
   if (!session && req) {
     try {
       const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-      if (token && (token as any).id) {
+      if (token && typeof token.id === "string") {
         session = {
           user: {
-            id: String((token as any).id),
+            id: String(token.id),
             name: token.name ?? null,
             email: token.email ?? null,
-            image: (token as any).picture ?? null,
+            image: (typeof token.picture === "string" ? token.picture : null) ?? null,
           },
           expires: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         } as unknown as Session;

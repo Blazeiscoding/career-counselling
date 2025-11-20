@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getServerSession } from "next-auth";
@@ -78,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     // Build system prompt
     const conversationHistory = previousMessages
-      .map((m: any) => `${m.role === "USER" ? "User" : "Assistant"}: ${m.content}`)
+      .map((m) => `${m.role === "USER" ? "User" : "Assistant"}: ${m.content}`)
       .join("\n");
 
     const systemPrompt = `You are an experienced career counselor named CareerBot. You provide thoughtful, personalized career advice based on the user's situation, interests, skills, and goals. 

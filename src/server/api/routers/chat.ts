@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -145,7 +144,7 @@ export const chatRouter = createTRPCRouter({
         // Prepare conversation history for Gemini
         const conversationHistory = previousMessages
           .map(
-            (msg: { role: string; content: any }) =>
+            (msg) =>
               `${msg.role === "USER" ? "User" : "Assistant"}: ${msg.content}`
           )
           .join("\n");

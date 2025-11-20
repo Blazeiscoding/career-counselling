@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -62,6 +61,8 @@ export function ChatSidebar({
 
   const sessions = sessionsData?.sessions || [];
 
+  type SessionType = (typeof sessions)[number];
+
   const handleNewChat = () => {
     if (status !== "authenticated") {
       router.push("/auth/signin");
@@ -70,7 +71,7 @@ export function ChatSidebar({
     createSessionMutation.mutate({});
   };
 
-  const handleEditTitle = (session: any) => {
+  const handleEditTitle = (session: SessionType) => {
     setEditingId(session.id);
     setEditTitle(session.title);
   };

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react/no-unescaped-entities */
 "use client";
@@ -26,12 +25,13 @@ export default function SignInPage() {
         email,
         password,
         callbackUrl: "/chat",
+        redirect: false,
       });
-      if ((result as any)?.error) {
+      if (result?.error) {
         setError("Invalid credentials");
       }
     } catch (error) {
-      setError(error as string);
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }

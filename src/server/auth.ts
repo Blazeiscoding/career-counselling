@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type GetServerSidePropsContext } from "next";
 import {
   getServerSession,
@@ -33,7 +32,7 @@ export const authOptions: NextAuthOptions = {
         ...session,
         user: session.user
           ? { ...session.user, id: (token as { id?: string }).id ?? "" }
-          : (session.user as any),
+          : session.user,
       };
     },
   },
