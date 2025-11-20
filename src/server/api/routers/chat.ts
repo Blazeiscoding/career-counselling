@@ -138,13 +138,14 @@ export const chatRouter = createTRPCRouter({
       });
 
       try {
-        // Initialize Gemini model
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Initialize Gemini model - use GEMINI_MODEL_NAME env var or default
+        const modelName = process.env.GEMINI_MODEL_NAME || "gemini-2.5-flash";
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         // Prepare conversation history for Gemini
         const conversationHistory = previousMessages
           .map(
-            (msg: { role: string; content: any; }) =>
+            (msg: { role: string; content: any }) =>
               `${msg.role === "USER" ? "User" : "Assistant"}: ${msg.content}`
           )
           .join("\n");

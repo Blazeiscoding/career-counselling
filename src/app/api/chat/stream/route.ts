@@ -6,12 +6,30 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/server/auth";
 import { db } from "@/server/db";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = process.env.GEMINI_API_KEY 
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null;
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { 
+        status: 401,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
+
+  if (!genAI) {
+    return new Response(
+      JSON.stringify({ error: "GEMINI_API_KEY is not configured" }),
+      { 
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
   }
 
   try {
@@ -19,7 +37,13 @@ export async function POST(req: NextRequest) {
     const { sessionId, content } = body as { sessionId: string; content: string };
 
     if (!sessionId || !content || !content.trim()) {
-      return new Response("Invalid payload", { status: 400 });
+      return new Response(
+        JSON.stringify({ error: "Invalid payload: sessionId and content are required" }),
+        { 
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
     }
 
     // Verify session belongs to user
@@ -27,7 +51,13 @@ export async function POST(req: NextRequest) {
       where: { id: sessionId, userId: session.user.id },
     });
     if (!chatSession) {
-      return new Response("Chat session not found", { status: 404 });
+      return new Response(
+        JSON.stringify({ error: "Chat session not found" }),
+        { 
+          status: 404,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
     }
 
     // Save user message
@@ -74,8 +104,25 @@ Current user message: ${content}
 
 Please respond as CareerBot, the career counselor:`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const streamingResult = await model.generateContentStream(systemPrompt);
+    // Use the same model as configured in chat router
+    // Common model names: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash-exp, gemini-pro, gemini-2.5-pro, gemini-2.5-flash
+    // You can set GEMINI_MODEL_NAME in .env to override
+    const modelName = process.env.GEMINI_MODEL_NAME || "gemini-2.5-flash";
+    const model = genAI.getGenerativeModel({ model: modelName });
+    let streamingResult;
+    try {
+      streamingResult = await model.generateContentStream(systemPrompt);
+    } catch (genError) {
+      console.error("Gemini API error:", genError);
+      const errorMsg = genError instanceof Error ? genError.message : "Failed to generate content";
+      return new Response(
+        JSON.stringify({ error: `AI service error: ${errorMsg}` }),
+        { 
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        }
+      );
+    }
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
@@ -137,6 +184,14 @@ Please respond as CareerBot, the career counselor:`;
       },
     });
   } catch (e) {
-    return new Response("Bad Request", { status: 400 });
+    console.error("Stream API error:", e);
+    const errorMessage = e instanceof Error ? e.message : "Internal server error";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
   }
 }

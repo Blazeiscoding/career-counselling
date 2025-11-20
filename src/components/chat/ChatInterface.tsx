@@ -185,6 +185,7 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
     });
     setInput("");
 
+    let hasError = false;
     try {
       const res = await fetch("/api/chat/stream", {
         method: "POST",
@@ -192,28 +193,62 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
         body: JSON.stringify({ sessionId, content }),
       });
 
-      if (!res.ok || !res.body) {
-        throw new Error("Streaming request failed");
+      if (!res.ok) {
+        // Try to get error message from response
+        let errorMessage = "Streaming request failed";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (Status: ${res.status})`);
+      }
+
+      if (!res.body) {
+        throw new Error("Response body is null - streaming not available");
       }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        setOptimisticAssistantMsg((prev) =>
-          prev ? { ...prev, content: prev.content + chunk } : prev
-        );
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          setOptimisticAssistantMsg((prev) =>
+            prev ? { ...prev, content: prev.content + chunk } : prev
+          );
+        }
+      } finally {
+        reader.releaseLock();
       }
     } catch (error) {
+      hasError = true;
       console.error("Failed to stream response:", error);
+      // Show error message to user
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      setOptimisticAssistantMsg((prev) =>
+        prev ? { 
+          ...prev, 
+          content: `⚠️ Error: ${errorMessage}. Please try again.` 
+        } : null
+      );
+      // Refetch to get any messages that were saved
+      void refetch();
     } finally {
       setIsLoading(false);
       setOptimisticUserMsg(null);
-      setOptimisticAssistantMsg(null);
-      void refetch();
+      // Clear optimistic assistant message after a delay to show error, or immediately if success
+      if (hasError) {
+        setTimeout(() => {
+          setOptimisticAssistantMsg(null);
+        }, 5000);
+      } else {
+        setOptimisticAssistantMsg(null);
+        void refetch();
+      }
     }
   };
 
