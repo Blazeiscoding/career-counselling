@@ -1,9 +1,9 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import Providers from "./providers";
 import Navbar from "@/components/Navbar";
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-sans",
 });
@@ -22,26 +22,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  // Force dark mode always
-                  document.documentElement.classList.add('dark');
-                  localStorage.setItem('theme', 'dark');
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
-      <body className={`font-sans antialiased ${inter.variable}`} suppressHydrationWarning>
+      <body className={`font-sans antialiased ${outfit.variable}`} suppressHydrationWarning>
         <Providers>
-          <div className="flex flex-col h-screen">
+          <div className="flex flex-col h-screen bg-background text-foreground transition-colors duration-300">
             <Navbar />
-            <main className="flex-1 overflow-hidden">
+            <main className="flex-1 overflow-hidden relative">
               {children}
             </main>
           </div>
