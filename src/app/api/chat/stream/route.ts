@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { NextRequest } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getServerSession } from "next-auth";
@@ -184,8 +184,8 @@ Please respond as CareerBot, the career counselor:`;
                 chatSessionId: sessionId,
               },
             });
-          } catch (dbError) {
-            console.error("Failed to save fallback message to database:", dbError);
+          } catch (_dbError) {
+            console.error("Failed to save fallback message to database:", _dbError);
             // Continue - we've already sent the fallback message to the client
           }
           controller.close();

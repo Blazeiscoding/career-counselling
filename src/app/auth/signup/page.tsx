@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 "use client";
 
 import { useState } from "react";
@@ -72,7 +72,7 @@ export default function SignUpPage() {
         const data = await response.json();
         setError(data.message || "Registration failed");
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred during registration");
     } finally {
       setIsLoading(false);

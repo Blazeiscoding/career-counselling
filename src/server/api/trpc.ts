@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { initTRPC, TRPCError } from "@trpc/server";
 import { type Session, getServerSession } from "next-auth";
 import { getToken } from "next-auth/jwt";
@@ -38,7 +38,7 @@ export const createTRPCContext = async (req?: NextRequest) => {
           expires: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         } as unknown as Session;
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
   }

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import bcrypt from "bcryptjs";
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     await db.user.update({ where: { id: user.id }, data: { password: hashed } });
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ ok: false, error: "invalid request" }, { status: 400 });
   }
 }

@@ -1,12 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
-import { Send, User, Bot, Sparkles, ArrowUp } from "lucide-react";
+import { User, Bot, Sparkles, ArrowUp } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { MESSAGE_CONSTANTS } from "@/lib/constants";
 
@@ -34,19 +31,34 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
   // Optimistic in-flight messages for streaming UI
   const [optimisticUserMsg, setOptimisticUserMsg] = useState<
     | null
-    | { id: string; role: "USER"; content: string; createdAt: string }
+    | { id: string; role: "USER"; content: string; createdAt: Date; chatSessionId: string }
   >(null);
   const [optimisticAssistantMsg, setOptimisticAssistantMsg] = useState<
     | null
-    | { id: string; role: "ASSISTANT"; content: string; createdAt: string }
+    | { id: string; role: "ASSISTANT"; content: string; createdAt: Date; chatSessionId: string }
   >(null);
 
   const messages = messagesData?.messages || [];
-  const visibleMessages = [
-    ...messages,
-    ...(optimisticUserMsg ? [optimisticUserMsg] : []),
-    ...(optimisticAssistantMsg ? [optimisticAssistantMsg] : []),
-  ];
+  
+  // Deduplicate optimistic messages that might have been persisted
+  const isDuplicate = (optimisticMsg: typeof optimisticUserMsg | typeof optimisticAssistantMsg) => {
+    if (!optimisticMsg || messages.length === 0) return false;
+    // Check last 2 messages for a match to handle race conditions where
+    // optimistic message is still present but data has been refetched
+    return messages.slice(-2).some(
+      (m) => m.role === optimisticMsg.role && m.content === optimisticMsg.content
+    );
+  };
+
+  const visibleMessages = [...messages];
+  
+  if (optimisticUserMsg && !isDuplicate(optimisticUserMsg)) {
+    visibleMessages.push(optimisticUserMsg);
+  }
+  
+  if (optimisticAssistantMsg && !isDuplicate(optimisticAssistantMsg)) {
+    visibleMessages.push(optimisticAssistantMsg);
+  }
 
   // Auto-resize textarea
   useEffect(() => {
@@ -154,17 +166,17 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
     );
   };
 
-  const scrollToBottom = (opts: ScrollToOptions = { behavior: "smooth" }) => {
+  const scrollToBottom = useCallback((opts: ScrollToOptions = { behavior: "smooth" }) => {
     const el = listRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, ...opts });
-  };
+  }, []);
 
   useEffect(() => {
     if (visibleMessages.length > 0 || optimisticUserMsg || optimisticAssistantMsg) {
       scrollToBottom();
     }
-  }, [visibleMessages, optimisticUserMsg, optimisticAssistantMsg]);
+  }, [messages, optimisticUserMsg, optimisticAssistantMsg, scrollToBottom]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,13 +188,15 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
       id: "optimistic-user",
       role: "USER", 
       content,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
+      chatSessionId: sessionId,
     });
     setOptimisticAssistantMsg({
       id: "optimistic-assistant",
       role: "ASSISTANT",
       content: "",
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
+      chatSessionId: sessionId,
     });
     setInput("");
 
@@ -240,7 +254,15 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
       void refetch();
     } finally {
       setIsLoading(false);
+      
+      if (!hasError) {
+        // Fetch latest messages before clearing optimistic state to prevent flickering
+        // This ensures the persisted message is available before we remove the optimistic one
+        await refetch();
+      }
+
       setOptimisticUserMsg(null);
+      
       // Clear optimistic assistant message after a delay to show error, or immediately if success
       if (hasError) {
         setTimeout(() => {
@@ -248,7 +270,6 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
         }, MESSAGE_CONSTANTS.ERROR_MESSAGE_DISPLAY_TIME);
       } else {
         setOptimisticAssistantMsg(null);
-        void refetch();
       }
     }
   };
@@ -267,7 +288,7 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
                 Welcome to Career Counselor
               </h2>
               <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                I'm your AI career counselor, ready to help you navigate your professional journey. 
+                I&apos;m your AI career counselor, ready to help you navigate your professional journey. 
                 What would you like to explore today?
               </p>
               
@@ -298,7 +319,6 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
             {visibleMessages.map((message, idx) => {
               const prev = visibleMessages[idx - 1];
               const isUser = message.role === "USER";
-              const isGroupStart = !prev || prev.role !== message.role;
 
               return (
                 <div

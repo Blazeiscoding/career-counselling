@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import bcrypt from "bcryptjs";
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const match = await bcrypt.compare(trimmedPassword, user.password);
 
     return NextResponse.json({ ok: true, found: true, looksHashed, match, hashPrefix: user.password.slice(0, 4), hashLen: user.password.length });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ ok: false, error: "invalid request" }, { status: 400 });
   }
 }

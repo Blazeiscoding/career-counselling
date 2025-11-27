@@ -1,5 +1,5 @@
 
-/* eslint-disable react/no-unescaped-entities */
+
 "use client";
 
 import { useState } from "react";
@@ -110,7 +110,7 @@ export default function SignInPage() {
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/auth/signup" className="text-primary hover:underline font-medium transition-colors">
               Sign up
             </Link>
