@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-sync-scripts */
 import "./globals.css";
 import { Outfit } from "next/font/google";
 import Providers from "./providers";
@@ -22,15 +23,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased ${outfit.variable}`} suppressHydrationWarning>
+      <body
+        className={`font-sans antialiased ${outfit.variable}`}
+        suppressHydrationWarning
+      >
         <Providers>
           <div className="flex flex-col h-screen bg-background text-foreground transition-colors duration-300">
             <Navbar />
-            <main className="flex-1 overflow-hidden relative">
-              {children}
-            </main>
+
+            <main className="flex-1 overflow-hidden relative">{children}</main>
           </div>
         </Providers>
+        <script
+          src="https://feedback-pulse.vercel.app/widget.js"
+          data-project="proj_O44xAKb2i6"
+        ></script>
       </body>
     </html>
   );
